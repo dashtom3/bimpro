@@ -1,4 +1,6 @@
 <template>
+  <div>
+  <img src="../assets/bg.jpeg" class="image">
   <el-form :model="ruleForm2" :rules="rules2" ref="ruleForm2" label-position="left" label-width="0px" class="demo-ruleForm login-container">
     <h3 class="title">用户登录</h3>
     <el-form-item prop="account">
@@ -13,6 +15,8 @@
       <!--<el-button @click.native.prevent="handleReset2">重置</el-button>-->
     </el-form-item>
   </el-form>
+
+  </div>
 </template>
 
 <script>
@@ -39,10 +43,14 @@
         checked: true
       };
     },
+    created(){
+
+    },
     methods: {
       handleReset2() {
         this.$refs.ruleForm2.resetFields();
       },
+
       handleSubmit2(ev) {
         var _this = this;
         this.$refs.ruleForm2.validate((valid) => {
@@ -96,5 +104,13 @@
     .remember {
       margin: 0px 0px 35px 0px;
     }
+  }
+  .image {
+    position: fixed;
+    left:0;
+    top:0;
+    z-index: -1;
+    width:100%;
+    height:100%;
   }
 </style>

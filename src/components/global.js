@@ -76,6 +76,7 @@ export default{
   apiPost(obj,url, params) {
   var self = this
   return new Promise((resolve, reject) => {
+    console.log(params)
     axios.post(url, params)
       .then((res) => {
         if (res.data.callStatus === 'SUCCEED') {
@@ -96,7 +97,7 @@ export default{
       });
   });
 },
-baseUrl: 'http://123.56.220.72:6060/xj/api/',
+baseUrl: 'http://106.14.227.7:6060/xj/api/',
 
   getHttpData: function (data) {
     var temp = ''

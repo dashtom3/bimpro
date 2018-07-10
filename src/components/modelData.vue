@@ -4,34 +4,100 @@
         <canvas id="canvas"></canvas>
     </div>
     <!-- <div id="info">选中的模型:		NULL</div> -->
-    <div class="ulcontent" v-if="basicData != null">
-      <div v-for="value,key in basicData[0].jsonVal">
+    <div class="ulcontent" v-if="showBasicData">
+      <div v-if="basicData.length > 0 ">
+      <div  v-for="value,key in basicData[0].jsonVal" >
         <el-row class="basicTable" >
             <div class="leftText"><span>{{basicData[0].key}}</span><span>({{key}})</span>
-              <el-button type="text" class="basicButton">关闭</el-button>
+              <el-button type="text" class="basicButton" @click="closeBasicData">关闭</el-button>
             </div>
         </el-row>
         <el-row class="basicTable">
               <el-row v-for="value2,key2 in value" v-if="typeof value2 != 'string'" class="basicContent">
-                <span>{{key2}}:
-                </span>
-                  <el-tag v-for="value3,key3 in value2" class="tagClass">
-                    {{key3}}:{{value3}}
-                  </el-tag>
+                <el-col :span="4">
+                  <div class="">
+                    <span>{{key2}}
+                    </span>
+                  </div>
+                </el-col>
+                <el-col :span="20">
+                  <div v-for="value3,key3 in value2" class="tagClass">
+                    <div class="tagTop">
+                      <span>{{key3}}</span>
+                    </div>
+                    <div class="tagBottom">
+                      <span>{{value3}}</span>
+                    </div>
+                  </div>
+                </el-col>
               </el-row>
-              <el-tag v-for="value2,key2 in value" v-if="typeof value2 == 'string'" class="tagClass">
+              <el-row v-if="typeof value[Object.keys(value)[0]] == 'string'" class="basicContent">
+                <el-col :span="4">
+                  <div class="">
+                    <span>{{key}}
+                    </span>
+                  </div>
+                </el-col>
+                <el-col :span="20">
+                  <div v-for="value2,key2 in value" class="tagClass">
+                    <div class="tagTop">
+                      <span>{{key2}}</span>
+                    </div>
+                    <div class="tagBottom">
+                      <span>{{value2}}</span>
+                    </div>
+                  </div>
+                </el-col>
+              <!-- <el-tag v-for="value2,key2 in value"  class="tagClass">
                   {{key2}}:{{value2}}
-              </el-tag>
+              </el-tag> -->
+              </el-row>
+        </el-row>
+      </div>
+      </div>
+      <div v-if="basicData.length == 0">
+        <el-row class="basicTable" >
+            <div class="leftText"><span>{{selectBasicObject}}</span>
+              <el-button type="text" class="basicButton" @click="closeBasicData">关闭</el-button>
+            </div>
+        </el-row>
+        <el-row class="basicTable2">
+          <span>暂无数据</span>
         </el-row>
       </div>
     </div>
-    <div class="ulbottom">
+    <!-- <div class="ulbottom">
       <h5>工序编号</h5>
       <ul class="ullist">
         <li v-for="item,index in proData" v-bind:class="{liactive: selectedPro == item}" @click="selectPro(item,index)">
           <span>{{item.consPhaseNumber}}</span>
         </li>
       </ul>
+    </div> -->
+    <div class="ulTop">
+      <div>
+        <span>选择工序:</span>
+        <el-select
+          v-model="selectedPro"
+          clearable
+          placeholder="请选择"
+          size=small
+          value-key="consPhaseNumber"
+          @change="selectPro"
+          style="width:100px;">
+          <el-option
+            v-for="item in proData"
+            :key="item.consPhaseNumber"
+            :label="item.consPhaseNumber"
+            :value="item">
+          </el-option>
+        </el-select>
+      </div>
+      <div style="backgroundColor:#d6d6d6;height:1px;width:100%;margin-top:5px;margin-bottom:5px"></div>
+      <div>
+        <span>工序名称:</span>
+        <span v-if="selectBasic != null">{{selectedPro.processName}}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -42,26 +108,39 @@
     data() {
       return {
         proData:null,
-        basicData:null,
+        basicData:[],
         selectedPro:null,
         loadPercent:"0%",
         fullscreenLoading: false,
+        allBasic:null,
+        selectBasic:null, //选择工序对应的关联单元
+        showBasicData:false,
+        selectBasicObject:null
       }
     },
     created(){
-      this.getBasisDataList("L4L0")
-      this.getProDataList()
+      // this.getBasisDataList("L4L0")
+
     },
     mounted(){
-      init(this);
-      animate();
+      this.fullscreenLoading = true;
+      this.getProDataList()
     },
     methods: {
-      selectPro(item,index){
-        this.selectedPro = item
-        console.log(this.proData);
-        this.getAllBasic(index)
+      //选择某个工序
+      selectPro(item){
+        // this.selectedPro = item
+        var temp =this.proData.indexOf(item)
+        if(temp != -1) {
+          this.selectBasic = this.getAllBasic(temp)
+          showBasics(this.selectBasic)
+        }
       },
+      closeBasicData(){
+        this.showBasicData = false
+        showBasics(this.selectBasic)
+      },
+      //得到所有关联单元数组
       getAllBasic(index){
         var temp = [];
         for(var i=0;i<=index;i++){
@@ -69,7 +148,7 @@
             temp = this.dataOperate(temp,this.proData[i].associatedUnit.split(","));
           }
         }
-        console.log(temp)
+        return temp
       },
       dataOperate(arr1,arr2){
           //不要直接使用var arr = arr1，这样arr只是arr1的一个引用，两者的修改会互相影响
@@ -80,15 +159,21 @@
           }
           return arr;
       },
+      //获取工序列表
       getProDataList(){
         var self = this
         global.apiGetWithToken(this,global.baseUrl+'returnProList').then((res)=>{
             // console.log(res)
             self.proData = res.data.data
+            self.allBasic = self.getAllBasic(self.proData.length-1)
+            init(self);
+            animate();
         })
       },
+      //获取某个关联单元数据
       getBasisDataList(basicKey){
         var self = this
+
         String.prototype.myReplace=function(f,e){//吧f替换成e
           var reg=new RegExp(f,"g"); //创建正则RegExp对象
           return this.replace(reg,e);
@@ -105,11 +190,14 @@
               item.value = item.value.myReplace("}", "\"}");
               item.value = item.value.myReplace("}\"}", "}}");
               item.value = item.value.myReplace("}\"}", "}}");
-              console.log(item.value)
               item.jsonVal = JSON.parse(item.value);
             })
+
             self.basicData = res.data.data
+            this.showBasicData = true;
             // console.log(res)
+        }).catch(()=>{
+            this.showBasicData = true;
         })
       }
     }
@@ -117,7 +205,7 @@
   function $(id){return document.getElementById(id);}
 
   var container;
-
+  var _this;
   var camera, scene, renderer;
   var cameraControls;
 
@@ -133,36 +221,12 @@
   var arrowSpeed = 0.2;
 
   var curObjects = [];
+  var showObjects = [];
   var selectObj;
-  var oldMat;
+  var oldPos;
+  var boundingSphere;
   var selectMat = new THREE.MeshPhongMaterial({color: 0x00D66B});
-  // var flowPositions = {};
-  // var pressurePositions = {};     //压力表显示位置列表
-  // var pipeObjects = [];           //管道模型对象列表
-  // var flowArrowList = [];         //表示水流箭头的模型对象列表
-  // var pressureSpriteList = {};    //压力值sprite列表
-  // var pumpStateSpriteList = {};   //泵状态sprite列表
-  // var pumpObjects = {};           //泵模型对象列表
-  // var pumpPipeList = {};          //泵所对应管道列表
-  // var pumpGroupList = {};         //泵所对应组模型列表
-
-  // var pumpState1Material = new THREE.MeshPhongMaterial({color: 0x1a237e});    //状态1颜色值
-  // var pumpState2Material = new THREE.MeshPhongMaterial({color: 0x42a5f5});    //状态2颜色值
-  // var pumpState3Material = new THREE.MeshPhongMaterial({color: 0xf44336});    //状态3颜色值
-
-  // var waterTexture = new THREE.TextureLoader().load("/static/3d/resource/texture/water.png");
-  // waterTexture.wrapS = THREE.RepeatWrapping;
-  // waterTexture.wrapT = THREE.RepeatWrapping;
-  // waterTexture.repeat.set( 2, 2 );
-  // var waterMat = new THREE.MeshPhongMaterial({map: waterTexture, side: THREE.DoubleSide, transparent:true, opacity:0.7});
-  //
-  // //========测试btn变量========
-  // var isShowFlow = false;
-  // var isShowPressure = false;
-  //=======================
-
-  // init();
-  // animate();
+  var selectMat2 = new THREE.MeshPhongMaterial({color: 0x0000FF});
 
   /**
    * 获取某个object的center
@@ -192,7 +256,7 @@
           if (xhr.lengthComputable) {
               var percentComplete = xhr.loaded / xhr.total * 100;
               self.loadPercent = Math.round(percentComplete, 2) + "%";
-              console.log(fileName + " " + Math.round(percentComplete, 2) + '% downloaded');
+              // console.log(fileName + " " + Math.round(percentComplete, 2) + '% downloaded');
           }
       };
 
@@ -208,14 +272,21 @@
           var objLoader = new THREE.OBJLoader();
           objLoader.setMaterials( materials );
           objLoader.setPath( resourceFolder + "/" );
-          console.log(resourceFolder + fileName + "/")
+          // console.log(resourceFolder + fileName + "/")
           objLoader.load( fileName + modelExtension, function ( object ) {
               scene.add( object );
               var vertices = [];
               for(var i = 0; i < object.children.length; ++i)
               {
                   // console.log(object.children[i])
-                  // curObjects.push(object.children[i]);
+
+                  if(self.allBasic.indexOf(object.children[i].name) != -1) {
+                    object.children[i].oldMaterial = object.children[i].material;
+                    // object.children[i].oldMaterial = selectMat
+                    // object.children[i].material = selectMat
+                    curObjects.push(object.children[i]);
+                  }
+                  object.children[i].material.visible = false;
                   for(var j=0; j<object.children[i].geometry.attributes.position.array.length; ++j)
                       vertices.push(object.children[i].geometry.attributes.position.array[j]);
               }
@@ -223,7 +294,7 @@
               var box = new THREE.Box3();
               var vector = new THREE.Vector3();
 
-              var boundingSphere = new THREE.Sphere();
+              boundingSphere = new THREE.Sphere();
               var center = boundingSphere.center;
 
               box.setFromArray( vertices );
@@ -237,7 +308,7 @@
               }
 
               boundingSphere.radius = Math.sqrt( maxRadiusSq );
-              camera.position.set(center.x, center.y , center.z + boundingSphere.radius + 100 );
+              camera.position.set(center.x, center.y , center.z + boundingSphere.radius );
 
               // CONTROLS
               cameraControls.target.set( center.x, center.y, center.z );
@@ -289,115 +360,6 @@
   function loadCompleted(resourceName) {
       console.log("load model " + resourceName + " completed");
   }
-  /**
-   * 显示气压值
-   * @param index: 气压表索引值
-   * @param value: 气压值
-   * @param bShow: 是否显示气压值
-   */
-  function showPressureSprite(index, value, bShow) {
-      if(pressurePositions[index] != null) {
-        if(pressureSpriteList[index] !== undefined) {
-            scene.remove(pressureSpriteList[index]);
-            pressureSpriteList[index] = undefined;
-        }
-        if(bShow == true) {
-            var sprite = makeTextSprite( " " + value + " ",
-                { fontsize: 64, fontface: "Georgia", borderColor: {r:0, g:0, b:255, a:1.0} } );
-            sprite.position.set(pressurePositions[index].x, pressurePositions[index].y, pressurePositions[index].z);
-            pressureSpriteList[index] = sprite;
-            scene.add( sprite );
-        }
-      }
-  }
-
-
-  /**
-   * 改变泵的状态
-   * @param index 泵的编号
-   * @param state 泵的状态 0:停止 1：变频 2：工频 3： 故障
-   */
-  function changePumpState(index, state) {
-      if(pumpObjects[index] === undefined)
-          return;
-      switch (state) {
-          case "泵休息":
-              changePumpVisible(index, true);
-              changePumpMat(index);
-              changePumpStateSprite(index, "泵休息");
-              changePumpPipeMat(index, false);
-              break;
-          case "泵变频":
-              changePumpVisible(index, true);
-              changePumpMat(index, pumpState1Material);
-              changePumpStateSprite(index, "泵变频");
-              changePumpPipeMat(index, true);
-              break;
-          case "泵运行":
-              changePumpVisible(index, true);
-              changePumpMat(index, pumpState2Material);
-              changePumpStateSprite(index, "泵运行");
-              changePumpPipeMat(index, true);
-              break;
-          case "泵故障":
-              changePumpVisible(index, true);
-              changePumpMat(index, pumpState3Material);
-              changePumpStateSprite(index, "泵故障");
-              changePumpPipeMat(index, false);
-              break;
-          case "":
-              changePumpVisible(index, false);
-              break;
-          default:
-              break;
-      }
-  }
-
-
-  /**
-   * 改变泵的显隐（顺便修改管道的显隐）
-   * @param index 泵的编号
-   * @param visible 显示或隐藏
-   */
-  function changePumpVisible(index, visible) {
-      for(var i=0; i<pumpObjects[index].length; ++i)
-          pumpObjects[index][i].visible = visible;
-      for(var i=0; i<pumpPipeList[index].length; ++i)
-          pumpPipeList[index][i].visible = visible;
-      for(var i=0; i<pumpGroupList[index].length; ++i)
-          pumpGroupList[index][i].visible = visible;
-      if(pumpStateSpriteList[index] != undefined && pumpStateSpriteList[index] != null)
-          pumpStateSpriteList[index].visible = visible;
-  }
-
-  //更改泵的材质
-  function changePumpMat(index, mat) {
-      for(var i=0; i<pumpObjects[index].length; ++i) {
-          if(mat !== undefined)
-              pumpObjects[index][i].material = mat;
-          else
-              pumpObjects[index][i].material = pumpObjects[index][i].oldmat;
-      }
-  }
-  //更改泵所对应管道状态
-  function changePumpPipeMat(index, isWork) {
-      for(var i=0; i<pumpPipeList[index].length; ++i) {
-          if(isWork)
-              pumpPipeList[index][i].material = waterMat;
-          else
-              pumpPipeList[index][i].material = pumpPipeList[index][i].oldmat;
-      }
-  }
-  //更改泵的状态sprite
-  function changePumpStateSprite(index, stateStr) {
-      scene.remove(pumpStateSpriteList[index]);
-      var sprite = makeTextSprite( " " + stateStr + " ",
-          { fontsize: 64, fontface: "Georgia", borderColor: {r:0, g:0, b:255, a:1.0} } );
-      var pos = pumpStateSpriteList[index].position.clone();
-      sprite.position.set(pos.x, pos.y, pos.z);
-      scene.add(sprite);
-      pumpStateSpriteList[index] = sprite;
-  }
 
   //判断资源是否存在
   function isExist(url) {
@@ -415,7 +377,143 @@
           return false;
       }
   }
+  function roundRect(ctx, x, y, w, h, r)
+  {
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.lineTo(x+w-r, y);
+      ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+      ctx.lineTo(x+w, y+h-r);
+      ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+      ctx.lineTo(x+r, y+h);
+      ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+      ctx.lineTo(x, y+r);
+      ctx.quadraticCurveTo(x, y, x+r, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+  }
 
+
+
+  /**
+   * 初始化场景
+   */
+  function init(self) {
+      _this = self
+      container = $( 'container' );
+      camera = new THREE.PerspectiveCamera( 45, container.offsetWidth / container.offsetHeight, 1, 1000000 );
+
+      // scene
+      scene = new THREE.Scene();
+
+      var ambient = new THREE.AmbientLight( 0x666666 );
+      scene.add( ambient );
+
+      var directionalLight = new THREE.DirectionalLight( 0xdfebff );
+      directionalLight.position.set( 50, 200, 100 );
+      scene.add( directionalLight );
+
+      THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+      loadFile(fileType,self);            //导入模型文件
+
+      //
+      renderer = new THREE.WebGLRenderer({canvas: $( 'canvas' ), antialias: true});
+      renderer.setClearColor( 0xf0f0f0 );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( container.offsetWidth, container.offsetHeight );
+
+      cameraControls = new THREE.OrbitControls( camera, renderer.domElement );
+
+      window.addEventListener( 'resize', onWindowResize, false );
+      renderer.domElement.addEventListener( 'click', selectObject, false);
+      // renderer.domElement.addEventListener( 'dblclick', dblselectObject, false);
+  }
+
+  function onWindowResize() {
+      camera.aspect = container.offsetWidth/container.offsetHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize( container.offsetWidth, container.offsetHeight );
+  }
+
+  function animate() {
+      requestAnimationFrame( animate );
+      render();
+  }
+  function showBasics(arr){
+    showObjects = []
+    curObjects.forEach(function(item){
+      if(arr.indexOf(item.name) == -1) {
+        item.material = item.oldMaterial
+        item.material.visible = false;
+      } else {
+        item.material = selectMat
+        item.material.visible = true;
+        showObjects.push(item)
+      }
+    })
+  }
+  function showTable(newSelectObject){
+    if(_this.selectBasic.indexOf(newSelectObject.name) != -1){
+      _this.selectBasicObject = newSelectObject.name
+      _this.getBasisDataList(newSelectObject.name)
+    }
+  }
+  // function dblselectObject(event) {
+  //   console.log(camera.position)
+  //   event.preventDefault();
+  //
+  //   var mouse = new THREE.Vector2();
+  //   mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+  //   mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+  //
+  //   raycaster.setFromCamera( mouse, camera );
+  //
+  //   var intersections = raycaster.intersectObjects( showObjects );
+  //
+  //   if ( intersections.length > 0 ) {
+  //     oldPos = camera.position;
+  //     var temp = intersections[ 0 ].object;
+  //     camera.position.set(temp.position.x, temp.position.y , temp.position.z + boundingSphere.radius );
+  //     // CONTROLS
+  //     cameraControls.target.set( temp.position.x, temp.position.y, temp.position.z +100);
+  //     // document.body.style.cursor = 'pointer';
+  //     // document.body.style.cursor = 'auto';
+  //   }
+  // }
+  function selectObject(event) {
+    event.preventDefault();
+
+    var mouse = new THREE.Vector2();
+    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+    raycaster.setFromCamera( mouse, camera );
+
+    var intersections = raycaster.intersectObjects( showObjects );
+
+    if ( intersections.length > 0 ) {
+
+      if ( selectObj != intersections[ 0 ].object ) {
+
+        // if ( selectObj ) selectObj.material = selectMat;
+        showBasics(_this.selectBasic)
+        selectObj = intersections[ 0 ].object;
+        selectObj.material = selectMat2;
+        showTable(intersections[ 0 ].object);
+
+      }
+
+      // document.body.style.cursor = 'pointer';
+      // document.body.style.cursor = 'auto';
+
+    }
+
+    else if ( selectObj ) {
+      _this.closeBasicData()
+    }
+  }
   /**
    * 创建显示板
    * @param message 要显示文字
@@ -441,7 +539,7 @@
       var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?
           parameters["backgroundColor"] : { r:255, g:255, b:255, a:1.0 };
 
-  //      var spriteAlignment = THREE.SpriteAlignment.topLeft;
+//      var spriteAlignment = THREE.SpriteAlignment.topLeft;
 
       var canvas = document.createElement('canvas');
       var context = canvas.getContext('2d');
@@ -473,107 +571,6 @@
       var sprite = new THREE.Sprite( spriteMaterial );
       sprite.scale.set(200,100,2.0);
       return sprite;
-  }
-  function roundRect(ctx, x, y, w, h, r)
-  {
-      ctx.beginPath();
-      ctx.moveTo(x+r, y);
-      ctx.lineTo(x+w-r, y);
-      ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-      ctx.lineTo(x+w, y+h-r);
-      ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-      ctx.lineTo(x+r, y+h);
-      ctx.quadraticCurveTo(x, y+h, x, y+h-r);
-      ctx.lineTo(x, y+r);
-      ctx.quadraticCurveTo(x, y, x+r, y);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-  }
-
-
-
-  /**
-   * 初始化场景
-   */
-  function init(self) {
-      container = $( 'container' );
-      camera = new THREE.PerspectiveCamera( 45, container.offsetWidth / container.offsetHeight, 1, 10000 );
-
-      // scene
-      scene = new THREE.Scene();
-
-      var ambient = new THREE.AmbientLight( 0x666666 );
-      scene.add( ambient );
-
-      var directionalLight = new THREE.DirectionalLight( 0xdfebff );
-      directionalLight.position.set( 50, 200, 100 );
-      scene.add( directionalLight );
-
-      THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
-      loadFile(fileType,self);            //导入模型文件
-
-      //
-      renderer = new THREE.WebGLRenderer({canvas: $( 'canvas' ), antialias: true});
-      renderer.setClearColor( 0xf0f0f0 );
-      renderer.setPixelRatio( window.devicePixelRatio );
-      renderer.setSize( container.offsetWidth, container.offsetHeight );
-
-      cameraControls = new THREE.OrbitControls( camera, renderer.domElement );
-
-      window.addEventListener( 'resize', onWindowResize, false );
-      renderer.domElement.addEventListener( 'click', selectObject, false);
-  }
-
-  function onWindowResize() {
-      camera.aspect = container.offsetWidth/container.offsetHeight;
-      camera.updateProjectionMatrix();
-
-      renderer.setSize( container.offsetWidth, container.offsetHeight );
-  }
-
-  function animate() {
-      requestAnimationFrame( animate );
-      render();
-  }
-  function selectObject(event) {
-    event.preventDefault();
-
-    var mouse = new THREE.Vector2();
-    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-
-    raycaster.setFromCamera( mouse, camera );
-
-    var intersections = raycaster.intersectObjects( curObjects );
-
-    if ( intersections.length > 0 ) {
-
-      if ( selectObj != intersections[ 0 ].object ) {
-
-        if ( selectObj ) selectObj.material = oldMat;
-
-        selectObj = intersections[ 0 ].object;
-        oldMat = selectObj.material;
-        selectObj.material = selectMat;
-
-      }
-
-      document.body.style.cursor = 'pointer';
-
-    }
-
-    else if ( selectObj ) {
-
-      selectObj.material = oldMat;
-      selectObj = null;
-
-      document.body.style.cursor = 'auto';
-
-    }
-
-    if(selectObj)
-      console.log(selectObj);
   }
   function render() {
       TWEEN.update();
@@ -642,14 +639,22 @@
     height: 500px;
     top:20px;
     right: 20px;
-    width:500px;
+    width:550px;
     background-color: white;
     overflow: scroll;
+    border:1px solid #d6d6d6;
   }
   .basicTable {
     border-bottom: 1px solid #e6e6e6;
-    margin-top: 20px;
+    margin-top: 5px;
     padding-bottom: 20px;
+  }
+  .basicTable2{
+    text-align: center;
+    padding-top: 50px;
+  }
+  .basicTable2 span {
+    color: #999999;
   }
   .basicContent {
     border-bottom: 1px solid #e6e6e6;
@@ -661,13 +666,39 @@
   .tagClass {
     margin-right: 2px;
     margin-bottom: 2px;
+    display: inline-block;
+    width: 141px;
+    text-align: center;
+    border: 1px solid #d6d6d6;
+  }
+  .tagClass span {
+    font-size: 12px;
+  }
+  .tagTop{
+    background-color: #ECECEC;
+    border-bottom: 1px solid #d6d6d6;
+    text-align: center;
   }
   .leftText {
     text-align:center;
+    margin-top: 15px;
   }
   .basicButton {
     float: right;
     padding: 0px;
     padding-right: 10px;
+  }
+  .ulTop {
+    position: fixed;
+    top: 0px;
+    /* height: 40px; */
+    width: 180px;
+    background-color: #ffffff;
+    padding: 5px;
+    border: 1px solid #d6d6d6;
+    margin-left: 2px;
+  }
+  .ulTop span {
+    font-size: 13px;
   }
 </style>

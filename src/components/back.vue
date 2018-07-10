@@ -16,7 +16,11 @@
           </el-menu-item>
           <el-menu-item index="dataview">
             <i class="el-icon-document"></i>
-            <span slot="title">数据查看</span>
+            <span slot="title">工序数据</span>
+          </el-menu-item>
+          <el-menu-item index="basicData">
+            <i class="el-icon-document"></i>
+            <span slot="title">基础数据</span>
           </el-menu-item>
           <el-menu-item index="upload">
             <i class="el-icon-upload"></i>

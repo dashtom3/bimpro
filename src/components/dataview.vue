@@ -25,7 +25,7 @@
       </template>
     </el-table-column>
   </el-table>
-  <h4>基础数据</h4>
+  <!-- <h4>基础数据</h4>
   <div class="basic">
     <el-row class="basicTable">
       <div>
@@ -51,7 +51,7 @@
           </el-tag>
       </el-col>
       </div>
-    </el-row>
+    </el-row> -->
   </div>
   </div>
 </template>

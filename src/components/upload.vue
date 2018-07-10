@@ -1,9 +1,9 @@
 <template>
 	<el-form ref="form" label-width="80px" style="margin:20px;width:60%;min-width:600px;">
-		<el-form-item label="数据上传">
+		<el-form-item label="工序上传">
 			<el-upload
 			  class="upload-demo"
-			  :action="uploadURL"
+			  :action="uploadProcess"
 			  :on-preview="handlePreview"
 			  :on-remove="handleRemove"
 			  :before-remove="beforeRemove"
@@ -16,6 +16,22 @@
 			  <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
 			</el-upload>
 		</el-form-item>
+		<el-form-item label="基础数据上传">
+			<el-upload
+			  class="upload-demo"
+			  :action="uploadBasic"
+			  :on-preview="handlePreview"
+			  :on-remove="handleRemove"
+			  :before-remove="beforeRemove"
+				:on-success="handleAvatarSuccess"
+			  multiple
+			  :limit="1"
+			  :on-exceed="handleExceed"
+			  :file-list="fileList1">
+			  <el-button size="small" type="primary">点击上传</el-button>
+			  <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+			</el-upload>
+		</el-form-item>
 	</el-form>
 </template>
 
@@ -24,8 +40,10 @@ import global from './global.js'
 	export default {
 		data() {
 			return {
-				uploadURL:global.baseUrl+"uploadExcel?token="+global.getToken(),
-				fileList:[]
+				uploadProcess:global.baseUrl+"uploadProcessExcel?token="+global.getToken(),
+				uploadBasic:global.baseUrl+"uploadBasisExcel?token="+global.getToken(),
+				fileList:[],
+				fileList1:[],
 			}
 		},
 		methods: {
