@@ -1,6 +1,7 @@
 <template>
   <div>
   <img src="../assets/bg.jpeg" class="image">
+  <h2 class="headTxt">深圳地铁6号线合水口—薯田埔区间V墩刚构桥施工信息系统</h2>
   <el-form :model="ruleForm2" :rules="rules2" ref="ruleForm2" label-position="left" label-width="0px" class="demo-ruleForm login-container">
     <h3 class="title">用户登录</h3>
     <el-form-item prop="account">
@@ -112,5 +113,14 @@
     z-index: -1;
     width:100%;
     height:100%;
+  }
+  .headTxt {
+    font-size: 30px;
+    text-align: center;
+    position: absolute;
+    top: 80px;
+    left: 0;
+    right: 0;
+    margin: auto
   }
 </style>

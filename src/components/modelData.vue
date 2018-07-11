@@ -7,20 +7,20 @@
     <div class="ulcontent" v-if="showBasicData">
       <div v-if="basicData.length > 0 ">
       <div  v-for="value,key in basicData[0].jsonVal" >
-        <el-row class="basicTable" >
-            <div class="leftText"><span>{{basicData[0].key}}</span><span>({{key}})</span>
-              <el-button type="text" class="basicButton" @click="closeBasicData">关闭</el-button>
+        <el-row class="maxTop" >
+            <div class="leftText"><span>{{basicData[0].key}}</span><span>({{key |selfReplace}})</span>
+              <el-button type="success" class="basicButton" @click="closeBasicData">关闭</el-button>
             </div>
         </el-row>
         <el-row class="basicTable">
               <el-row v-for="value2,key2 in value" v-if="typeof value2 != 'string'" class="basicContent">
-                <el-col :span="4">
-                  <div class="">
+                <el-col :span="5">
+                  <div class="tagleft">
                     <span>{{key2}}
                     </span>
                   </div>
                 </el-col>
-                <el-col :span="20">
+                <el-col :span="19">
                   <div v-for="value3,key3 in value2" class="tagClass">
                     <div class="tagTop">
                       <span>{{key3}}</span>
@@ -32,13 +32,13 @@
                 </el-col>
               </el-row>
               <el-row v-if="typeof value[Object.keys(value)[0]] == 'string'" class="basicContent">
-                <el-col :span="4">
+                <el-col :span="5">
                   <div class="">
                     <span>{{key}}
                     </span>
                   </div>
                 </el-col>
-                <el-col :span="20">
+                <el-col :span="19">
                   <div v-for="value2,key2 in value" class="tagClass">
                     <div class="tagTop">
                       <span>{{key2}}</span>
@@ -56,9 +56,9 @@
       </div>
       </div>
       <div v-if="basicData.length == 0">
-        <el-row class="basicTable" >
+        <el-row class="maxTop" >
             <div class="leftText"><span>{{selectBasicObject}}</span>
-              <el-button type="text" class="basicButton" @click="closeBasicData">关闭</el-button>
+              <el-button type="success" class="basicButton" @click="closeBasicData">关闭</el-button>
             </div>
         </el-row>
         <el-row class="basicTable2">
@@ -116,6 +116,13 @@
         selectBasic:null, //选择工序对应的关联单元
         showBasicData:false,
         selectBasicObject:null
+      }
+    },
+    filters: {
+      selfReplace(str) {
+        if (str) {
+          return str.replace(/施工信息数据/g, "基础数据");
+        }
       }
     },
     created(){
@@ -190,12 +197,13 @@
               item.value = item.value.myReplace("}", "\"}");
               item.value = item.value.myReplace("}\"}", "}}");
               item.value = item.value.myReplace("}\"}", "}}");
+              item.value = item.value.myReplace("基础数据", "施工信息数据");
               item.jsonVal = JSON.parse(item.value);
             })
 
             self.basicData = res.data.data
             this.showBasicData = true;
-            // console.log(res)
+            console.log(res,666)
         }).catch(()=>{
             this.showBasicData = true;
         })
@@ -418,7 +426,7 @@
       loadFile(fileType,self);            //导入模型文件
 
       //
-      renderer = new THREE.WebGLRenderer({canvas: $( 'canvas' ), antialias: true});
+      renderer = new THREE.WebGLRenderer({canvas: $( 'canvas' ), antialias: true,logarithmicDepthBuffer:true});
       renderer.setClearColor( 0xf0f0f0 );
       renderer.setPixelRatio( window.devicePixelRatio );
       renderer.setSize( container.offsetWidth, container.offsetHeight );
@@ -636,7 +644,7 @@
   }
   .ulcontent{
     position: fixed;
-    height: 500px;
+    height: 550px;
     top:20px;
     right: 20px;
     width:550px;
@@ -644,10 +652,16 @@
     overflow: scroll;
     border:1px solid #d6d6d6;
   }
+  .maxTop{
+    background-color: rgb(236, 236, 236);
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
   .basicTable {
-    border-bottom: 1px solid #e6e6e6;
+    /* border-bottom: 1px solid #e6e6e6; */
     margin-top: 5px;
     padding-bottom: 20px;
+    /* background-color: rgb(236, 236, 236) */
   }
   .basicTable2{
     text-align: center;
@@ -657,36 +671,68 @@
     color: #999999;
   }
   .basicContent {
-    border-bottom: 1px solid #e6e6e6;
-    margin-bottom: 5px;
-    padding-bottom: 3px;
-    padding-left: 10px;
-    padding-right: 10px;
+    border: 1px solid #d6d6d6;
+    margin-bottom: 20px;
+    margin-left: 17px;
+    margin-right: 23px;
+    background-color: rgb(236, 236, 236);
   }
   .tagClass {
-    margin-right: 2px;
-    margin-bottom: 2px;
+    /* margin-right: 2px; */
+    /* margin-bottom: 2px; */
     display: inline-block;
-    width: 141px;
+    width: 132px;
     text-align: center;
-    border: 1px solid #d6d6d6;
+    border-left: 1px solid #d6d6d6;
+    border-right: 1px solid #d6d6d6;
   }
   .tagClass span {
     font-size: 12px;
   }
+  .tagleft {
+    height: 100%;
+    background-color: rgb(236, 236, 236);
+  }
+  .tagleft>span{
+    width: 100%;
+    height: 100%;
+    display: inline-block;
+    text-align: center;
+   font-size: 14px;
+   font-weight: 600
+  }
   .tagTop{
     background-color: #ECECEC;
-    border-bottom: 1px solid #d6d6d6;
+    /* border-bottom: 1px solid #d6d6d6;
+    border-top: 1px solid #d6d6d6; */
+    border: 1px solid #d6d6d6;
     text-align: center;
+    margin-left: -1px;
+    margin-right: -2px;
+    margin-top: -1px;
+    margin-bottom: -2px;
+  }
+  .tagTop>span{
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .tagBottom {
+    border: 1px solid #d6d6d6;
+    background-color: white;
+    margin-left: -1px;
+    margin-right: -2px;
+    margin-bottom: -1px;
   }
   .leftText {
-    text-align:center;
+    text-align:left;
     margin-top: 15px;
+    padding-left: 15px;
   }
   .basicButton {
+
     float: right;
-    padding: 0px;
-    padding-right: 10px;
+    padding: 6px;
+    margin-right: 15px
   }
   .ulTop {
     position: fixed;
